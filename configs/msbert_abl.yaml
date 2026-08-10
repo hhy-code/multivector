@@ -1,0 +1,21 @@
+model:
+  model_name: msbert_abl
+  pretrained_model: bert-base-uncased
+  dim: 128
+  span_size: 16
+  n_heads: 12
+  dropout: 0.1
+  qry_maxlen: 32
+  doc_maxlen: 300
+  ckpt_path: /root/autodl-tmp/ckpt/msbert_abl/states/checkpoint-4400/model.safetensors  # 4400, 5200
+  device: cuda
+  amp: true
+
+data:
+  dataset_path: /root/data/beir/webis-touche2020
+  split: test
+
+evaluation:
+  query_batch_size: 512
+  corpus_batch_size: 1024 
+  # output_path: ...

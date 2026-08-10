@@ -1,0 +1,38 @@
+model:
+  model_name: msbert_abl
+  pretrained_model: bert-base-uncased
+  dim: 128
+  span_size: 4
+  n_heads: 12
+  dropout: 0.1
+  qry_maxlen: 32
+  doc_maxlen: 300
+  temp: 0.2
+  learnable_temp: false
+
+data:
+  train:
+    triples_path: /root/data/msmarco-passage/train/qrels.tsv
+    queries_path: /root/data/msmarco-passage/train/queries.tsv
+    corpus_path: /root/data/msmarco-passage/train/collection.tsv
+    nway: 1
+  eval:
+    qrels_path: /root/data/nano-beir/qrels/test.tsv
+    queries_path: /root/data/nano-beir/queries.jsonl
+    corpus_path: /root/data/nano-beir/corpus.jsonl
+
+training:
+  output_dir: /root/autodl-tmp/ckpt/msbert_abl/states
+  num_train_epochs: 10
+  learning_rate: 8.0e-5
+  warmup_steps: 500
+  per_device_train_batch_size: 256
+  per_device_eval_batch_size: 512
+  weight_decay: 0.01
+  seed: 42
+  dataloader_num_workers: 4
+  eval_and_save_steps: 200
+  logging_steps: 25
+  logging_dir: /root/autodl-tmp/ckpt/msbert_abl/log
+  bf16: True
+  # resume_from_checkpoint:

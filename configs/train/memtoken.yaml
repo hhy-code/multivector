@@ -1,0 +1,40 @@
+model:
+  model_name: memtoken
+  pretrained_model: bert-base-uncased
+  dim: 128
+  mem_num: 32
+  qry_maxlen: 32
+  doc_maxlen: 300
+  temp: 0.2
+  # ckpt_path: /root/autodl-tmp/ckpt/memtoken/states/checkpoint-41000/model.safetensors
+
+data:
+  train:
+    triples_path: /root/data/msmarco-passage/train/qrels.tsv
+    queries_path: /root/data/msmarco-passage/train/queries.tsv
+    corpus_path: /root/data/msmarco-passage/train/collection.tsv
+    nway: 1
+  eval:
+    qrels_path: /root/data/nano-beir/qrels/test.tsv
+    queries_path: /root/data/nano-beir/queries.jsonl
+    corpus_path: /root/data/nano-beir/corpus.jsonl
+
+training:
+  # rerank: false
+  output_dir: /root/autodl-tmp/ckpt/memtoken/states
+  num_train_epochs: 5
+  # save_total_limit: 5
+  # max_steps: 20
+  learning_rate: 5.0e-5
+  temperature_learning_rate: 5.0e-6
+  warmup_steps: 200
+  per_device_train_batch_size: 256
+  per_device_eval_batch_size: 512
+  weight_decay: 0.01
+  seed: 42
+  dataloader_num_workers: 4
+  eval_and_save_steps: 100
+  logging_steps: 25
+  logging_dir: /root/autodl-tmp/ckpt/memtoken/log
+  bf16: True
+  # resume_from_checkpoint:

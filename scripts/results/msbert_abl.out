@@ -1,0 +1,129 @@
+nohup: ignoring input
+Using config: ../configs/evaluate/msbert_abl.yaml
+
+========================================
+Evaluating dataset: arguana
+========================================
+{
+  "NDCG@10": 0.39054,
+  "Recall@1000": 0.97582,
+  "latency_ms_per_query": 3.6456050006984064
+}
+
+Skipping dataset: dbpedia-entity
+
+========================================
+Evaluating dataset: fiqa
+========================================
+{
+  "NDCG@10": 0.29797,
+  "Recall@1000": 0.81467,
+  "latency_ms_per_query": 47.692160916702974
+}
+
+Skipping dataset: hotpotqa
+
+========================================
+Evaluating dataset: nfcorpus
+========================================
+{
+  "NDCG@10": 0.33266,
+  "Recall@1000": 0.56913,
+  "latency_ms_per_query": 8.806940934753431
+}
+
+Skipping dataset: nq
+
+Skipping dataset: quora
+
+========================================
+Evaluating dataset: scidocs
+========================================
+{
+  "NDCG@10": 0.14277,
+  "Recall@1000": 0.56517,
+  "latency_ms_per_query": 17.89853340096306
+}
+
+========================================
+Evaluating dataset: scifact
+========================================
+{
+  "NDCG@10": 0.66819,
+  "Recall@1000": 0.98,
+  "latency_ms_per_query": 13.376185646823918
+}
+
+========================================
+Evaluating dataset: trec-covid
+========================================
+{
+  "NDCG@10": 0.70931,
+  "Recall@1000": 0.40799,
+  "latency_ms_per_query": 1778.0200048605911
+}
+
+========================================
+Evaluating dataset: webis-touche2020
+========================================
+{
+  "NDCG@10": 0.22206,
+  "Recall@1000": 0.80744,
+  "latency_ms_per_query": 3971.5545986522447
+}
+
+All datasets have been evaluated.
+nohup: ignoring input
+Using config: ../configs/evaluate/msbert_abl.yaml
+
+Skipping dataset: arguana
+
+========================================
+Evaluating dataset: dbpedia-entity
+========================================
+{
+  "NDCG@10": 0.37555,
+  "Recall@1000": 0.73328,
+  "latency_ms_per_query": 3285.3157844248926
+}
+
+Skipping dataset: fiqa
+
+========================================
+Evaluating dataset: hotpotqa
+========================================
+{
+  "NDCG@10": 0.54952,
+  "Recall@1000": 0.81215,
+  "latency_ms_per_query": 239.3734878060835
+}
+
+Skipping dataset: nfcorpus
+
+========================================
+Evaluating dataset: nq
+========================================
+{
+  "NDCG@10": 0.42957,
+  "Recall@1000": 0.9746,
+  "latency_ms_per_query": 350.31371380329006
+}
+
+========================================
+Evaluating dataset: quora
+========================================
+{
+  "NDCG@10": 0.79118,
+  "Recall@1000": 0.99642,
+  "latency_ms_per_query": 6.789768695505336
+}
+
+Skipping dataset: scidocs
+
+Skipping dataset: scifact
+
+Skipping dataset: trec-covid
+
+Skipping dataset: webis-touche2020
+
+All datasets have been evaluated.

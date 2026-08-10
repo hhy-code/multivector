@@ -1,0 +1,19 @@
+model:
+  model_name: constbert
+  pretrained_model: bert-base-uncased
+  dim: 128
+  n_out: 32
+  qry_maxlen: 32
+  doc_maxlen: 300
+  ckpt_path: /root/autodl-tmp/ckpt/constbert/states/checkpoint-1700/model.safetensors  # 1700, 2500
+  device: cuda
+  amp: true
+
+data:
+  dataset_path: /root/data/beir/trec_2020
+  split: test
+
+evaluation:
+  query_batch_size: 512
+  corpus_batch_size: 3072
+  # output_path: ...
