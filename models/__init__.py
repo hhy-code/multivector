@@ -5,10 +5,6 @@ from .tokenpooling import TokenPooling, TokenPoolingTokenizer
 from .meanpooling import MeanPooling, MeanPoolingTokenizer
 from .memtoken import MemToken, MemTokenTokenizer
 from .tokenpruning import TokenPruning, TokenPruningTokenizer
-from .msbert import MSBert, MSBertTokenizer
-from .msbert_abl import MSBert_abl, MSBertablTokenizer
-from .msbert_w_cls import MSBert_w_cls, MSBertwclsTokenizer
-from .msbert_w_cls_abl import MSBert_w_cls_abl, MSBertwclsablTokenizer
 from .linear_pooling import LinearPooling, LinearPoolingTokenizer
 from .encoder import Encoder
 from .factories import (
@@ -35,14 +31,6 @@ __all__ = [
     "MemTokenTokenizer",
     "TokenPruning",
     "TokenPruningTokenizer",
-    "MSBert",
-    "MSBertTokenizer",
-    "MSBert_abl",
-    "MSBertablTokenizer",
-    "MSBert_w_cls",
-    "MSBertwclsTokenizer",
-    "MSBert_w_cls_abl",
-    "MSBertwclsablTokenizer",
     "LinearPooling",
     "LinearPoolingTokenizer",
     "Encoder",
