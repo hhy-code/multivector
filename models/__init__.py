@@ -1,5 +1,6 @@
 from models.base import BaseModel, BaseTokenizer, colbert_score
 from .colbert import ColBERT, ColBERTTokenizer
+from .colberter import ColBERTer, ColBERTerTokenizer
 from .constbert import ConstBERT, ConstBERTTokenizer
 from .tokenpooling import TokenPooling, TokenPoolingTokenizer
 from .meanpooling import MeanPooling, MeanPoolingTokenizer
@@ -21,6 +22,8 @@ __all__ = [
     "colbert_score",
     "ColBERT",
     "ColBERTTokenizer",
+    "ColBERTer",
+    "ColBERTerTokenizer",
     "ConstBERT",
     "ConstBERTTokenizer",
     "TokenPooling",
