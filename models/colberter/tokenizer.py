@@ -98,7 +98,7 @@ class ColBERTerTokenizer(BaseTokenizer):
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> "ColBERTerTokenizer":
-        pretrained_model = config.get("pretrained_model", "distilbert-base-uncased")
+        pretrained_model = config.get("pretrained_model", "bert-base-uncased")
         qry_maxlen = config.get("qry_maxlen", 32)
         doc_maxlen = config.get("doc_maxlen", 300)
         stem_words = config.get("stem_words", True)
