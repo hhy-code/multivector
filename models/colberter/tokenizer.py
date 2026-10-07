@@ -7,6 +7,7 @@ from torch import Tensor
 
 from models.base import BaseTokenizer
 from models.factories import register_tokenizer
+from utils.utils import insert_prefix_token_id
 
 
 @register_tokenizer("colberter")
@@ -34,7 +35,10 @@ class ColBERTerTokenizer(BaseTokenizer):
         if not add_special_tokens:
             return tokens
 
-        return [[self.cls_token] + tokens_ + [self.sep_token] for tokens_ in tokens]
+        return [
+            [self.cls_token, self.Q_token] + tokens_ + [self.sep_token]
+            for tokens_ in tokens
+        ]
 
     def tokenize_doc(
         self,
@@ -46,7 +50,10 @@ class ColBERTerTokenizer(BaseTokenizer):
         if not add_special_tokens:
             return tokens
 
-        return [[self.cls_token] + tokens_ + [self.sep_token] for tokens_ in tokens]
+        return [
+            [self.cls_token, self.D_token] + tokens_ + [self.sep_token]
+            for tokens_ in tokens
+        ]
 
     def _create_word_ids(self, texts: list[str], offsets: Tensor) -> Tensor:
         word_ids = torch.zeros(offsets.shape[:2], dtype=torch.long)
@@ -75,6 +82,7 @@ class ColBERTerTokenizer(BaseTokenizer):
         texts: list[str],
         max_length: int,
         padding: str,
+        prefix_id: int,
     ) -> tuple[Tensor, Tensor]:
         obj = self.tok(
             texts,
@@ -82,19 +90,32 @@ class ColBERTerTokenizer(BaseTokenizer):
             truncation=True,
             return_tensors="pt",
             return_offsets_mapping=True,
-            max_length=max_length,
+            max_length=max_length - 1,
         )
 
         word_ids = self._create_word_ids(texts, obj["offset_mapping"])
-        input_ids = torch.stack([obj["input_ids"], word_ids], dim=1)
+        token_ids = insert_prefix_token_id(obj["input_ids"], prefix_id)
+        word_ids = insert_prefix_token_id(word_ids, 0)
+        attention_mask = insert_prefix_token_id(obj["attention_mask"], 1)
+        input_ids = torch.stack([token_ids, word_ids], dim=1)
 
-        return input_ids, obj["attention_mask"]
+        return input_ids, attention_mask
 
     def tensorize_qry(self, texts: list[str]) -> tuple[Tensor, Tensor]:
-        return self._tensorize(texts, self.qry_maxlen, "max_length")
+        return self._tensorize(
+            texts,
+            self.qry_maxlen,
+            "max_length",
+            self.Q_token_id,
+        )
 
     def tensorize_doc(self, texts: list[str]) -> tuple[Tensor, Tensor]:
-        return self._tensorize(texts, self.doc_maxlen, "longest")
+        return self._tensorize(
+            texts,
+            self.doc_maxlen,
+            "longest",
+            self.D_token_id,
+        )
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> "ColBERTerTokenizer":

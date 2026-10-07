@@ -19,9 +19,8 @@ class ColBERTer(BaseModel):
         use_contextualized_stopwords: bool = True,
         stopword_loss_weight: float = 0.5,
         temp: float | None = None,
-        learnable_temp: bool = False,
     ) -> None:
-        super().__init__(temp=temp, learnable_temp=learnable_temp)
+        super().__init__(temp=temp)
 
         self.bert = AutoModel.from_pretrained(pretrained_model)
         self.cls_linear = nn.Linear(self.bert.config.hidden_size, cls_dim)
@@ -94,6 +93,7 @@ class ColBERTer(BaseModel):
     def compute_loss(self, Q: dict[str, Tensor], D: dict[str, Tensor]) -> Tensor:
         loss = super().compute_loss(Q, D)
         if self.use_contextualized_stopwords and self.stopword_loss_weight > 0:
+            self.loss_dict["stopword_loss"] = self.stopword_loss.detach()
             loss = loss + self.stopword_loss_weight * self.stopword_loss
         return loss
 
@@ -128,14 +128,5 @@ class ColBERTer(BaseModel):
         )
         stopword_loss_weight = config.get("stopword_loss_weight", 0.5)
         temp = config.get("temp")
-        learnable_temp = config.get("learnable_temp", False)
 
-        return cls(
-            pretrained_model,
-            cls_dim,
-            dim,
-            use_contextualized_stopwords,
-            stopword_loss_weight,
-            temp,
-            learnable_temp,
-        )
+        return cls(pretrained_model, cls_dim, dim, use_contextualized_stopwords, stopword_loss_weight, temp)

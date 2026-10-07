@@ -1,0 +1,70 @@
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.ipynb_checkpoints/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local environments and credentials
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# macOS metadata
+.DS_Store
+._*
+__MACOSX/
+
+# Datasets are transferred to the server separately; keep setup documentation.
+/data/*
+!/data/README.md
+# Also ignore datasets accidentally placed in the project root.
+/*.tsv
+/*.jsonl
+/*.tar
+/*.tar.gz
+/*.tgz
+/*.zip
+/*.gz
+
+# Training logs (including W&B run metadata)
+wandb/
+*.log
+events.out.tfevents.*
+/logs/
+/runs/
+/result/*
+!/result/README.md
+nohup.out
+
+# Model weights, optimizer states and generated checkpoints
+*.safetensors
+*.pt
+*.pth
+checkpoint-*/
+/ckpt/
+/checkpoints/
+/outputs/
+/model_cache/
+/hf_cache/
+
+# Local retrieval indexes and encoding caches (not retrieval source code)
+/indexes/
+/indices/
+/embeddings/
+
+# Local rollback copies; keep them on disk
+/backups/
+
+# Local analysis outputs
+/analysis_fusion/
+/analysis_two_stage/
+/d_i_analysis/

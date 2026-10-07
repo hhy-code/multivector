@@ -18,9 +18,8 @@ class ConstBERT(BaseModel):
         doc_maxlen: int,
         n_out: int = 32,
         temp: float | None = None,
-        learnable_temp: bool = False
     ) -> None:
-        super().__init__(temp=temp, learnable_temp=learnable_temp)
+        super().__init__(temp=temp)
 
         self.doc_maxlen = doc_maxlen
         self.bert = AutoModel.from_pretrained(pretrained_model, add_pooling_layer=False)
@@ -70,6 +69,5 @@ class ConstBERT(BaseModel):
         doc_maxlen = config.get("doc_maxlen", 256)
         n_out = config.get("n_out", 32)
         temp = config.get("temp")
-        learnable_temp = config.get("learnable_temp", False)
 
-        return cls(pretrained_model, dim, doc_maxlen, n_out, temp=temp, learnable_temp=learnable_temp)
+        return cls(pretrained_model, dim, doc_maxlen, n_out, temp=temp)

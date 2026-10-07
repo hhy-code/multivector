@@ -17,9 +17,8 @@ class MemToken(BaseModel):
         dim: int,
         mem_num: int,
         temp: float | None = None,
-        learnable_temp: bool = False
     ) -> None:
-        super().__init__(temp=temp, learnable_temp=learnable_temp)
+        super().__init__(temp=temp)
 
         self.mem_num = mem_num
 
@@ -65,6 +64,5 @@ class MemToken(BaseModel):
         dim = config.get("dim", 128)
         mem_num = config.get("mem_num", 32)
         temp = config.get("temp")
-        learnable_temp = config.get("learnable_temp", False)
 
-        return cls(pretrained_model, dim, mem_num, temp=temp, learnable_temp=learnable_temp)
+        return cls(pretrained_model, dim, mem_num, temp=temp)

@@ -15,5 +15,5 @@ data:
 
 evaluation:
   query_batch_size: 512
-  corpus_batch_size: 3072
+  corpus_batch_size: 512
   # output_path: ...

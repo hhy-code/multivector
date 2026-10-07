@@ -78,9 +78,9 @@ class MemTokenTokenizer(BaseTokenizer):
 
     @classmethod
     def from_config(cls, config) -> "MemTokenTokenizer":
-        return cls(
-            config.get("pretrained_model", "bert-base-uncased"),
-            config.get("qry_maxlen", 32),
-            config.get("doc_maxlen", 300),
-            config.get("mem_num", 32)
-        )
+        pretrained_model = config.get("pretrained_model", "bert-base-uncased")
+        qry_maxlen = config.get("qry_maxlen", 32)
+        doc_maxlen = config.get("doc_maxlen", 300)
+        mem_num = config.get("mem_num", 32)
+
+        return cls(pretrained_model, qry_maxlen, doc_maxlen, mem_num)

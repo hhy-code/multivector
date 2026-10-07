@@ -38,12 +38,12 @@ def load_corpus(path: str) -> dict[str, str]:
             if path.endswith(".tsv"):
                 did, document, *rest = _load_from_tsv(line)
                 if len(rest) >= 1:
-                    document = rest[0] + "|" + document  # combine the title and text.
+                    document = (rest[0] + " " + document).strip()  # combine the title and text.
             elif path.endswith(".jsonl"):
                 record = _load_from_json(line)
                 did, document = record["_id"], record["text"]
                 if "title" in record:
-                    document = record["title"] + "|" + document
+                    document = (record["title"] + " " + document).strip()
             else:
                 raise ValueError("Invalid file type. Only `tsv` and `jsonl` are supported.")
             documents[did] = document

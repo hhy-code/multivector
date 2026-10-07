@@ -1,0 +1,47 @@
+model:
+  model_name: agc
+  pretrained_model: bert-base-uncased
+  dim: 128
+  qry_maxlen: 32
+  doc_maxlen: 300
+  temp: 0.2
+  num_repr_vectors: 32
+  num_universal_queries: 32
+  # ckpt_path: /path/to/colbert/model.safetensors
+
+data:
+  train:
+    triples_path: /mnt/HDD0/home/lyy25/data/MS_Marco/train/hard_negatives_100.tsv
+    queries_path: /mnt/HDD0/home/lyy25/data/MS_Marco/train/queries.tsv
+    corpus_path: /mnt/HDD0/home/lyy25/data/MS_Marco/collection.tsv
+    nway: 1
+  eval:
+    qrels_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/qrels/test.tsv
+    queries_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/queries.jsonl
+    corpus_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/corpus.jsonl
+
+training:
+  gather_across_devices: true
+  score_margins: false
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  fp16: True
+  bf16: False
+  early_stopping_patience: 8
+  report_to: wandb
+  wandb_project: multi-vector
+  run_name: agc
+  output_dir: /mnt/HDD1/home/lyy25/ckpt/multi-vector/agc/states
+  num_train_epochs: 2
+  learning_rate: 1.0e-5  # 8.0e-5
+  warmup_steps: 500  # 250
+  per_device_train_batch_size: 128  # 256
+  per_device_eval_batch_size: 256  # 512
+  weight_decay: 0.01
+  seed: 42
+  dataloader_num_workers: 4
+  eval_steps: 150
+  save_steps: 150
+  logging_steps: 20
+  logging_dir: /mnt/HDD1/home/lyy25/ckpt/multi-vector/agc/log
+  # resume_from_checkpoint:

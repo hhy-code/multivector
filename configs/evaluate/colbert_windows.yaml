@@ -1,0 +1,20 @@
+# Run after training has saved model.safetensors to the path below.
+model:
+  model_name: colbert
+  pretrained_model: bert-base-uncased
+  dim: 128
+  qry_maxlen: 32
+  doc_maxlen: 128
+  ckpt_path: ./checkpoints/colbert_windows/model.safetensors
+  device: cuda
+  amp: true
+
+data:
+  dataset_path: ./data/nanobeir_merged
+  split: test
+
+evaluation:
+  query_batch_size: 4
+  corpus_batch_size: 4
+  cache_queries_on_device: false
+  output_path: ./result/colbert_windows.json

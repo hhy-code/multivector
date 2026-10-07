@@ -1,0 +1,23 @@
+model:
+  model_name: leapmv
+  pretrained_model: bert-base-uncased
+  dim: 128
+  qry_maxlen: 32
+  doc_maxlen: 300
+  temp: 0.2
+  dropout: 0.1
+  gumbel_temp: 0.6666666666666666
+  keep_ratio: 0.25
+  protected_tokens: 0
+  ckpt_path: /mnt/HDD1/home/lyy25/ckpt/multi-vector/leapmv_layer_norm_sqrt_dim_gate/states/model.safetensors
+  device: cuda
+  amp: true
+
+data:
+  dataset_path: /mnt/HDD1/home/lyy25/data/beir/webis-touche2020
+  split: test
+
+evaluation:
+  query_batch_size: 512
+  corpus_batch_size: 512
+  # output_path: ...

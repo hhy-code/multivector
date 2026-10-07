@@ -8,27 +8,37 @@ model:
 
 data:
   train:
-    triples_path: /root/data/msmarco-passage/train/qrels.tsv
-    queries_path: /root/data/msmarco-passage/train/queries.tsv
-    corpus_path: /root/data/msmarco-passage/train/collection.tsv
+    triples_path: /mnt/HDD1/home/lyy25/data/MS_Marco/train/hard_negatives_32.tsv
+    queries_path: /mnt/HDD0/home/lyy25/data/MS_Marco/train/queries.tsv
+    corpus_path: /mnt/HDD0/home/lyy25/data/MS_Marco/collection.tsv
     nway: 1
   eval:
-    qrels_path: /root/data/nano-beir/qrels/test.tsv
-    queries_path: /root/data/nano-beir/queries.jsonl
-    corpus_path: /root/data/nano-beir/corpus.jsonl
+    qrels_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/qrels/test.tsv
+    queries_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/queries.jsonl
+    corpus_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/corpus.jsonl
 
 training:
-  output_dir: /root/autodl-tmp/ckpt/colbert/states
-  num_train_epochs: 10
-  learning_rate: 8.0e-5
-  warmup_steps: 200
-  per_device_train_batch_size: 256
-  per_device_eval_batch_size: 512
+  gather_across_devices: true
+  score_margins: false
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  fp16: True
+  bf16: False
+  early_stopping_patience: 1000000
+  report_to: wandb
+  wandb_project: multi-vector
+  run_name: colbert_0927
+  output_dir: /mnt/HDD1/home/lyy25/ckpt/multi-vector/colbert_0927/states
+  num_train_epochs: 4
+  learning_rate: 2.0e-5  # 8.0e-5
+  warmup_steps: 1000  # 250
+  per_device_train_batch_size: 128  # 256
+  per_device_eval_batch_size: 256  # 512
   weight_decay: 0.01
   seed: 42
   dataloader_num_workers: 4
-  eval_and_save_steps: 200
-  logging_steps: 25
-  logging_dir: /root/autodl-tmp/ckpt/colbert/log
-  bf16: True
-  # resume_from_checkpoint:
+  eval_steps: 500
+  save_steps: 500
+  logging_steps: 50
+  logging_dir: /mnt/HDD1/home/lyy25/ckpt/multi-vector/colbert_0927/log
+  # resume_from_checkpoint: true

@@ -1,0 +1,20 @@
+# 原始 ColBERT 评测参数与数据集，仅改为项目内相对路径。
+# 保留原配置所选的 checkpoint-8000；需先训练生成该检查点。
+model:
+  model_name: colbert
+  pretrained_model: bert-base-uncased
+  dim: 128
+  qry_maxlen: 32
+  doc_maxlen: 300
+  ckpt_path: ./checkpoints/colbert_0927/states/checkpoint-8000/model.safetensors
+  device: cuda
+  amp: true
+
+data:
+  dataset_path: ./data/beir/webis-touche2020
+  split: test
+
+evaluation:
+  query_batch_size: 512
+  corpus_batch_size: 512
+  # output_path: ...

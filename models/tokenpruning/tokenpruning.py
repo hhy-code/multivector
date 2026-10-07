@@ -8,7 +8,6 @@ from transformers import AutoModel
 
 from models.base import BaseModel, colbert_score
 from models.factories import register_model
-from utils.utils import mask_sep
 
 
 @register_model("tokenpruning")
@@ -21,9 +20,8 @@ class TokenPruning(BaseModel):
         pruning_factor: int,
         idf_path: str | None = None,
         temp: float | None = None,
-        learnable_temp: bool = False
     ) -> None:
-        super().__init__(temp=temp, learnable_temp=learnable_temp)
+        super().__init__(temp=temp)
 
         if pruning not in {"first", "attn", "idf"}:
             raise ValueError("pruning must be either 'first', 'attn' or 'idf'")
@@ -35,7 +33,7 @@ class TokenPruning(BaseModel):
         self.pruning = pruning
         self.pruning_factor = pruning_factor
 
-        self.bert = AutoModel.from_pretrained(pretrained_model, add_pooling_layer=False)
+        self.bert = AutoModel.from_pretrained(pretrained_model)
         self.linear = nn.Linear(self.bert.config.hidden_size, dim, bias=False)
 
         self.register_buffer("idf_lookup", None, persistent=False)
@@ -86,18 +84,13 @@ class TokenPruning(BaseModel):
         return self._pruning(input_ids, D, attention_mask)
 
     def _pruning(self, input_ids: Tensor, D: Tensor, D_mask: Tensor) -> dict[str, Tensor]:
-        prefix = D[:, :2]
-
-        input_ids = input_ids[:, 2:]
-        D = D[:, 2:]
-        D_mask = mask_sep(D_mask[:, 2:])
-
+        # CLS, D and SEP participate in pruning just like other valid tokens.
         valid_mask = D_mask.bool()
         doc_lens = valid_mask.sum(dim=1, dtype=torch.long)
         keep_lens = (doc_lens * self.pruning_factor).ceil().int().clamp_min_(1)
         # Documents are padded to the longest sequence in the batch, so this
         # equals max(keep_lens) without a GPU-to-CPU synchronization.
-        max_k = max(math.ceil((D.size(1) - 1) * self.pruning_factor), 1)  # -1 excluding [SEP]
+        max_k = max(math.ceil(D.size(1) * self.pruning_factor), 1)
         keep_mask = (
             torch.arange(max_k, device=D.device)[None, :] < keep_lens[:, None]
         )
@@ -129,11 +122,6 @@ class TokenPruning(BaseModel):
         # Dense batches require a shared max_k width. Remove the extra values
         # of shorter documents instead of merely relying on the score mask.
         pruned_repr = pruned_repr.masked_fill(~keep_mask.unsqueeze(-1), 0)
-        pruned_repr = torch.cat([prefix, pruned_repr], dim=1)
-        keep_mask = torch.cat(
-            [keep_mask.new_ones((prefix.size(0), 2)), keep_mask], 
-            dim=1
-        )
 
         return {
             "mv_repr": pruned_repr,
@@ -158,14 +146,5 @@ class TokenPruning(BaseModel):
         pruning_factor = config.get("pruning_factor", 4)
         idf_path = config.get("idf_path", None)
         temp = config.get("temp")
-        learnable_temp = config.get("learnable_temp", False)
 
-        return cls(
-            pretrained_model,
-            dim,
-            pruning,
-            pruning_factor,
-            idf_path,
-            temp=temp,
-            learnable_temp=learnable_temp,
-        )
+        return cls(pretrained_model, dim, pruning, pruning_factor, idf_path, temp=temp)

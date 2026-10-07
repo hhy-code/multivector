@@ -3,18 +3,18 @@ model:
   pretrained_model: bert-base-uncased
   dim: 128
   pruning: first
-  pruning_factor: 0.5
+  pruning_factor: 0.25
   qry_maxlen: 32
   doc_maxlen: 300
-  ckpt_path: /root/autodl-tmp/ckpt/colbert/states/checkpoint-1400/model.safetensors
+  ckpt_path: /mnt/HDD1/home/lyy25/ckpt/multi-vector/colbert_0927/states/checkpoint-5500/model.safetensors
   device: cuda
   amp: true
 
 data:
-  dataset_path: /root/data/beir/trec_2020
+  dataset_path: /mnt/HDD1/home/lyy25/data/beir/webis-touche2020
   split: test
 
 evaluation:
   query_batch_size: 512
-  corpus_batch_size: 3072
+  corpus_batch_size: 512
   # output_path: ...

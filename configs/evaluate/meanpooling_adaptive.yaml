@@ -1,0 +1,24 @@
+model:
+  model_name: meanpooling
+  pretrained_model: bert-base-uncased
+  dim: 128
+  pooling_mode: adaptive
+  keep_ratio: 0.25
+  protected_tokens: 0
+  qry_maxlen: 32
+  doc_maxlen: 300
+  ckpt_path: /mnt/HDD1/home/lyy25/ckpt/multi-vector/colbert_0927/states/checkpoint-5500/model.safetensors
+  # /mnt/HDD1/home/lyy25/ckpt/multi-vector/meanpooling_linear/states/checkpoint-8000/model.safetensors
+  # /mnt/HDD1/home/lyy25/ckpt/multi-vector/colbert_new_1/states/checkpoint-6500/model.safetensors
+  # /mnt/HDD1/home/lyy25/ckpt/multi-vector/colbert_0927/states/checkpoint-8000/model.safetensors
+  device: cuda
+  amp: true
+
+data:
+  dataset_path: /mnt/HDD1/home/lyy25/data/beir/webis-touche2020
+  split: test
+
+evaluation:
+  query_batch_size: 512
+  corpus_batch_size: 512
+  # output_path: ...

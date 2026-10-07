@@ -63,9 +63,8 @@ class LinearPooling(BaseModel):
         span_size: int,
         dropout: float = 0.1,
         temp: float | None = None,
-        learnable_temp: bool = False
     ) -> None:
-        super().__init__(temp, learnable_temp=learnable_temp)
+        super().__init__(temp)
 
         self.bert = AutoModel.from_pretrained(pretrained_model, add_pooling_layer=False)
         hidden_size = self.bert.config.hidden_size
@@ -117,6 +116,5 @@ class LinearPooling(BaseModel):
         span_size = config.get("span_size", 4)
         dropout = config.get("dropout", 0.1)
         temp = config.get("temp")
-        learnable_temp = config.get("learnable_temp", False)
 
-        return cls(pretrained_model, dim, span_size, dropout, temp=temp, learnable_temp=learnable_temp)
+        return cls(pretrained_model, dim, span_size, dropout, temp=temp)

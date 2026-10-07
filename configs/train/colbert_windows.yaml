@@ -1,0 +1,52 @@
+# Run from the multi-vector directory with the project's virtual environment.
+# Requires data/msmarco/collection.tsv (not included in the supplied files).
+# Conservative starting settings for an RTX 3050 Laptop with 4 GB VRAM.
+model:
+  model_name: colbert
+  pretrained_model: bert-base-uncased
+  dim: 128
+  qry_maxlen: 32
+  doc_maxlen: 128
+  temp: 0.2
+
+data:
+  train:
+    triples_path: ./data/msmarco/train/hard_negatives_32.tsv
+    queries_path: ./data/msmarco/train/queries.tsv
+    corpus_path: ./data/msmarco/collection.tsv
+    # One positive and one sampled negative per query.
+    nway: 2
+  eval:
+    qrels_path: ./data/nanobeir_merged/qrels/test.tsv
+    queries_path: ./data/nanobeir_merged/queries.jsonl
+    corpus_path: ./data/nanobeir_merged/corpus.jsonl
+
+training:
+  output_dir: ./checkpoints/colbert_windows
+  logging_dir: ./logs/colbert_windows
+  run_name: colbert_windows
+  report_to: "none"
+  gather_across_devices: false
+  score_margins: true
+  num_train_epochs: 1
+  # Use 20 for a short training check; -1 trains for the epoch count above.
+  max_steps: -1
+  learning_rate: 2.0e-5
+  warmup_steps: 100
+  weight_decay: 0.01
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  # Accumulation does not increase the pool of in-batch negatives.
+  gradient_accumulation_steps: 16
+  max_grad_norm: 1.0
+  fp16: true
+  bf16: false
+  dataloader_num_workers: 0
+  eval_steps: 1000
+  save_steps: 1000
+  save_total_limit: 2
+  logging_steps: 10
+  early_stopping_patience: 8
+  seed: 42
+  # To resume a saved run, set an existing checkpoint directory explicitly:
+  # resume_from_checkpoint: ./checkpoints/colbert_windows/checkpoint-1000

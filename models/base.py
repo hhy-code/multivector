@@ -21,23 +21,14 @@ class EncoderOutput(ModelOutput):
 
 class BaseModel(nn.Module):
     """Base class for multi-vector retrieval models."""
-    def __init__(self, temp: float | None = None, learnable_temp: bool = False) -> None:
+    def __init__(self, temp: float | None = None) -> None:
         super().__init__()
-        if learnable_temp and temp is None:
-            raise ValueError("`temp` must be set when `learnable_temp` is True")
-        if temp is not None and temp <= 0:
+        self.temp = 1.0 if temp is None else float(temp)
+        if not 0 < self.temp < float("inf"):
             raise ValueError("`temp` must be positive")
-
-        self.learnable_temp = learnable_temp
-        self._temp = temp
-        if learnable_temp:
-            self.log_temp = nn.Parameter(torch.tensor(float(temp)).log())
-
-    @property
-    def temp(self) -> Tensor | float | None:
-        if self.learnable_temp:
-            return self.log_temp.exp()
-        return self._temp
+        self.gather_across_devices = True
+        self.score_margins = False
+        self.loss_dict = {}
 
     def encode_qry(self, input_ids: Tensor, attention_mask: Tensor) -> Any:
         raise NotImplementedError
@@ -51,7 +42,8 @@ class BaseModel(nn.Module):
 
     def compute_loss(self, Q: dict[str, Tensor], D: dict[str, Tensor]) -> Tensor:
         # gather documents from all devices while preserving gradients (except `mask`).
-        if dist.is_initialized():
+        gather = self.gather_across_devices and dist.is_initialized()
+        if gather:
             all_D = {}
             for k, v in D.items():
                 if "mask" in k:
@@ -71,67 +63,38 @@ class BaseModel(nn.Module):
 
         # use in-batch negative sampling by default.
         scores = self.score(Q, all_D, pairwise=False)
-        if self.temp is not None:
-            scores = scores / self.temp
-
         Nq = Q["mv_repr"].size(0)
         Nd_per_device = D["mv_repr"].size(0)
+        if Nq == 0 or Nd_per_device == 0 or Nd_per_device % Nq:
+            raise ValueError("Each query must have the same non-zero number of documents.")
         Nd_per_query = Nd_per_device // Nq
         labels = torch.arange(Nq, device=scores.device, dtype=torch.long) * Nd_per_query
         # Note: ensure that each device has the same number of documents.
-        if dist.is_initialized():
+        if gather:
             labels = labels + dist.get_rank() * Nd_per_device
 
-        return nn.functional.cross_entropy(scores, labels)
-
-    # TODO: The KD temperature is currently hardcoded to 2. Make it configurable.
-    def compute_kd_loss(self, Q: dict[str, Tensor], D: dict[str, Tensor], target_scores: Tensor) -> Tensor:
-        # Q["mv_repr"]: [Nq, Lq, D]
-        # D["mv_repr"]: [Nd, Ld, D]
-        # target_scores: [Nq, N]
-        scores = self.score(Q, D, pairwise=True)  # [Nq, Nd // Nq]
-        target_scores = torch.tensor(target_scores).to(scores.device)
-
-        temp = self.temp
-        if temp is not None:
-            scores = scores / temp
-            target_scores = target_scores / temp
-
-        target_scores = torch.nn.functional.log_softmax(target_scores, dim=-1)
-        log_scores = torch.nn.functional.log_softmax(scores, dim=-1)
-
-        loss = nn.functional.kl_div(
-            input=log_scores,
-            target=target_scores,
-            log_target=True,
-            reduction="batchmean"
-        )
-
-        if temp is not None:
-            loss = loss * temp ** 2
-
+        loss = nn.functional.cross_entropy(scores / self.temp, labels)
+        self.loss_dict["retrieval_loss"] = loss.detach()
+        if self.score_margins and scores.size(1) > 1:
+            with torch.no_grad():
+                positives = scores.detach().gather(1, labels[:, None]).squeeze(1)
+                negatives = scores.detach().clone()
+                negatives.scatter_(1, labels[:, None], -torch.inf)
+                self.loss_dict["score_margin"] = (positives - negatives.amax(dim=1)).mean()
         return loss
 
     def forward(
         self,
         query: tuple[Tensor, Tensor],
         document: tuple[Tensor, Tensor],
-        label: tuple[float] | None = None,
         pairwise: bool = True
     ) -> EncoderOutput:
         Q = self.encode_qry(*query)
         D = self.encode_doc(*document)
 
         if self.training:
-            if label is None:
-                loss = self.compute_loss(Q, D)
-            else:
-                loss = self.compute_kd_loss(Q, D, label)
-
-            if self.learnable_temp:
-                self.loss_dict = {
-                    "temp": self.temp.item()
-                }
+            self.loss_dict = {}
+            loss = self.compute_loss(Q, D)
 
             return EncoderOutput(loss=loss)
 

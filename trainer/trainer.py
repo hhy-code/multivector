@@ -4,7 +4,6 @@ from typing import Any
 import torch
 import torch.distributed as dist
 from transformers import Trainer
-from transformers.utils import is_sagemaker_mp_enabled
 
 from dataset import RetrievalEvalDataset
 from utils.dist import dist_gather
@@ -14,110 +13,48 @@ class MultiVectorTrainer(Trainer):
     def __init__(
         self,
         *args,
-        temperature_learning_rate: float | None = None,
+        gather_across_devices: bool = True,
+        score_margins: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.temperature_learning_rate = temperature_learning_rate
+        self.model.gather_across_devices = gather_across_devices
+        self.model.score_margins = score_margins
+        # Each model returns a mean metric; retain sample-weighted sums/counts.
+        self._metric_totals: dict[str, torch.Tensor] = {}
 
-    def create_optimizer(self):
-        if self.optimizer is not None:
-            return self.optimizer
-
-        opt_model = self.model_wrapped if is_sagemaker_mp_enabled() else self.model
-        decay_parameters = self.get_decay_parameter_names(opt_model)
-        temp_parameter_names = {
-            name
-            for name, param in opt_model.named_parameters()
-            if param.requires_grad and name.endswith("log_temp")
-        }
-
-        optimizer_grouped_parameters = [
-            {
-                "params": [
-                    param
-                    for name, param in opt_model.named_parameters()
-                    if (
-                        param.requires_grad
-                        and name in decay_parameters
-                        and name not in temp_parameter_names
-                    )
-                ],
-                "weight_decay": self.args.weight_decay,
-            },
-            {
-                "params": [
-                    param
-                    for name, param in opt_model.named_parameters()
-                    if (
-                        param.requires_grad
-                        and name not in decay_parameters
-                        and name not in temp_parameter_names
-                    )
-                ],
-                "weight_decay": 0.0,
-            },
-        ]
-
-        if temp_parameter_names:
-            optimizer_grouped_parameters.append(
-                {
-                    "params": [
-                        param
-                        for name, param in opt_model.named_parameters()
-                        if name in temp_parameter_names
-                    ],
-                    "lr": (
-                        self.temperature_learning_rate
-                        if self.temperature_learning_rate is not None
-                        else self.args.learning_rate
-                    ),
-                    "weight_decay": 0.0,
-                }
-            )
-
-        optimizer_grouped_parameters = [
-            group for group in optimizer_grouped_parameters if group["params"]
-        ]
-        optimizer_cls, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(
-            self.args,
-            opt_model,
-        )
-        if "params" in optimizer_kwargs:
-            optimizer_grouped_parameters = optimizer_kwargs.pop("params")
-        if "optimizer_dict" in optimizer_kwargs:
-            optimizer_grouped_parameters = optimizer_kwargs.pop("optimizer_dict")
-
-        self.optimizer = optimizer_cls(optimizer_grouped_parameters, **optimizer_kwargs)
-        return self.optimizer
+    @staticmethod
+    def _unwrap_model(model):
+        while hasattr(model, "module") or hasattr(model, "_orig_mod"):
+            model = model.module if hasattr(model, "module") else model._orig_mod
+        return model
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         loss, outputs = super().compute_loss(
-            model,
-            inputs,
-            return_outputs=True,
-            **kwargs,
+            model, inputs, return_outputs=True, **kwargs,
         )
-
-        raw_model = model.module if hasattr(model, "module") else model
-        logging_steps = int(self.args.logging_steps)
-
-        should_log_loss_dict = (
-            self.is_world_process_zero()
-            and self.state.global_step > 0
-            and logging_steps > 0
-            and self.state.global_step % logging_steps == 0
-            and getattr(self, "_last_loss_dict_log_step", None) != self.state.global_step
-        )
-
-        if should_log_loss_dict and hasattr(raw_model, "loss_dict"):
-            self.log({
-                f"train/{key}": value.item() if torch.is_tensor(value) else value
-                for key, value in raw_model.loss_dict.items()
-            })
-            self._last_loss_dict_log_step = self.state.global_step
-
+        raw_model = self._unwrap_model(model)
+        batch_size = inputs["query"][0].size(0)
+        for name, value in raw_model.loss_dict.items():
+            value = torch.as_tensor(value, device=loss.device).detach().float()
+            totals = torch.stack((value * batch_size, value.new_tensor(batch_size)))
+            if name in self._metric_totals:
+                self._metric_totals[name].add_(totals)
+            else:
+                self._metric_totals[name] = totals
         return (loss, outputs) if return_outputs else loss
+
+    def log(self, logs, start_time=None):
+        logs = dict(logs)
+        # Flush on training logs, not on an intervening evaluation callback.
+        if "loss" in logs or "train_loss" in logs:
+            for name, local_totals in self._metric_totals.items():
+                totals = local_totals.clone()
+                if dist.is_available() and dist.is_initialized():
+                    dist.all_reduce(totals, op=dist.ReduceOp.SUM)
+                logs[name] = (totals[0] / totals[1]).item()
+            self._metric_totals.clear()
+        super().log(logs, start_time)
 
     @torch.no_grad()
     def evaluate(
@@ -145,6 +82,7 @@ class MultiVectorTrainer(Trainer):
             raise ValueError("Cannot run full-corpus evaluation on an empty corpus.")
         batches_per_rank = math.ceil(len(document_ids) / (world_size * batch_size))
         keep = min(10, len(document_ids))
+        pruning_totals = None
 
         # Query representations stay on their owning rank. Documents are sharded
         # across ranks, encoded locally, and then gathered for global retrieval.
@@ -196,6 +134,13 @@ class MultiVectorTrainer(Trainer):
                 device=self.args.device,
                 dtype=torch.long,
             )
+            pruning_stats = getattr(encoder, "eval_pruning_stats", None)
+            if pruning_stats is not None:
+                batch_totals = pruning_stats[chunk_indices >= 0].sum(dim=0, dtype=torch.float64)
+                if pruning_totals is None:
+                    pruning_totals = batch_totals
+                else:
+                    pruning_totals.add_(batch_totals)
             if world_size > 1:
                 chunk_indices = dist_gather(chunk_indices, rank, world_size)
             for _, query_repr, top_scores, top_indices in query_batches:
@@ -235,6 +180,15 @@ class MultiVectorTrainer(Trainer):
         )
         score = ndcg_sum / query_count if query_count > 0 else 0.0
         metrics = {f"{metric_key_prefix}_ndcg@10": score}
+        if pruning_totals is not None:
+            if world_size > 1:
+                dist.all_reduce(pruning_totals, op=dist.ReduceOp.SUM)
+            keep_prob_sum, drop_prob_sum, keep_count, drop_count, valid_count = pruning_totals.tolist()
+            metrics.update({
+                f"{metric_key_prefix}_keep_prob_mean": keep_prob_sum / max(keep_count, 1),
+                f"{metric_key_prefix}_drop_prob_mean": drop_prob_sum / max(drop_count, 1),
+                f"{metric_key_prefix}_gate_keep_ratio": keep_count / max(valid_count, 1),
+            })
         self.log(metrics)
         self.control = self.callback_handler.on_evaluate(
             self.args,

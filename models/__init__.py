@@ -7,6 +7,12 @@ from .meanpooling import MeanPooling, MeanPoolingTokenizer
 from .memtoken import MemToken, MemTokenTokenizer
 from .tokenpruning import TokenPruning, TokenPruningTokenizer
 from .linear_pooling import LinearPooling, LinearPoolingTokenizer
+from .kmeans import KMeans, KMeansTokenizer
+from .scv import SCV, SCVTokenizer
+from .lossless import Lossless, LosslessTokenizer
+from .divprun import DivPrune, DivPruneTokenizer
+from .leapmv import LeapMV, LeapMVTokenizer
+from .agc import AGC, AGCTokenizer
 from .encoder import Encoder
 from .factories import (
     create_model,
@@ -36,6 +42,18 @@ __all__ = [
     "TokenPruningTokenizer",
     "LinearPooling",
     "LinearPoolingTokenizer",
+    "KMeans",
+    "KMeansTokenizer",
+    "SCV",
+    "SCVTokenizer",
+    "Lossless",
+    "LosslessTokenizer",
+    "DivPrune",
+    "DivPruneTokenizer",
+    "LeapMV",
+    "LeapMVTokenizer",
+    "AGC",
+    "AGCTokenizer",
     "Encoder",
     "create_model",
     "create_tokenizer",

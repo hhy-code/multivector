@@ -1,0 +1,47 @@
+model:
+  model_name: meanpooling
+  pretrained_model: bert-base-uncased
+  dim: 128
+  pooling_mode: adaptive
+  keep_ratio: 0.75
+  protected_tokens: 0
+  qry_maxlen: 32
+  doc_maxlen: 300
+  temp: 0.2
+
+data:
+  train:
+    triples_path: /mnt/HDD1/home/lyy25/data/MS_Marco/train/hard_negatives_32.tsv
+    queries_path: /mnt/HDD0/home/lyy25/data/MS_Marco/train/queries.tsv
+    corpus_path: /mnt/HDD0/home/lyy25/data/MS_Marco/collection.tsv
+    nway: 1
+  eval:
+    qrels_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/qrels/test.tsv
+    queries_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/queries.jsonl
+    corpus_path: /mnt/HDD0/home/lyy25/data/NanoBEIR_merged/corpus.jsonl
+
+training:
+  gather_across_devices: true
+  score_margins: false
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  fp16: True
+  bf16: False
+  early_stopping_patience: 1000000
+  report_to: wandb
+  wandb_project: multi-vector
+  run_name: meanpooling_adaptive
+  output_dir: /mnt/HDD1/home/lyy25/ckpt/multi-vector/meanpooling_adaptive/states
+  num_train_epochs: 4
+  learning_rate: 2.0e-5  # 8.0e-5
+  warmup_steps: 1000  # 250
+  per_device_train_batch_size: 128  # 256
+  per_device_eval_batch_size: 256  # 512
+  weight_decay: 0.01
+  seed: 42
+  dataloader_num_workers: 4
+  eval_steps: 500
+  save_steps: 500
+  logging_steps: 50
+  logging_dir: /mnt/HDD1/home/lyy25/ckpt/multi-vector/meanpooling_adaptive/log
+  # resume_from_checkpoint: true

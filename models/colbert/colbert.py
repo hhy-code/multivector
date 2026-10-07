@@ -15,9 +15,8 @@ class ColBERT(BaseModel):
         pretrained_model: str,
         dim: int,
         temp: float | None = None,
-        learnable_temp: bool = False
     ) -> None:
-        super().__init__(temp=temp, learnable_temp=learnable_temp)
+        super().__init__(temp=temp)
 
         # self.bert = AutoModel.from_pretrained(pretrained_model, add_pooling_layer=False)
         self.bert = AutoModel.from_pretrained(pretrained_model)
@@ -59,6 +58,5 @@ class ColBERT(BaseModel):
         pretrained_model = config.get("pretrained_model", "bert-base-uncased")
         dim = config.get("dim", 128)
         temp = config.get("temp")
-        learnable_temp = config.get("learnable_temp", False)
 
-        return cls(pretrained_model, dim, temp=temp, learnable_temp=learnable_temp)
+        return cls(pretrained_model, dim, temp=temp)
